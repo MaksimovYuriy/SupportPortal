@@ -1,4 +1,4 @@
-package postgres
+package repository
 
 import (
 	"context"
@@ -14,7 +14,7 @@ type PostgresTicketRepository struct {
 
 var _ repository.TicketRepository = (*PostgresTicketRepository)(nil)
 
-func NewTicketRepository(db *sql.DB) *PostgresTicketRepository {
+func NewPostgresTicketRepository(db *sql.DB) *PostgresTicketRepository {
 	return &PostgresTicketRepository{
 		db: db,
 	}

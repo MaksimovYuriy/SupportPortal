@@ -3,12 +3,20 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/MaksimovYuriy/SupportPortal/internal/transport/handlers"
 )
 
-func NewRouter() http.Handler {
+func NewRouter(ticketHandler *handlers.TicketHandler) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /health", healthHandler)
+
+	mux.HandleFunc("GET /tickets", ticketHandler.Index)
+	mux.HandleFunc("GET /tickets/{id}", ticketHandler.Show)
+	mux.HandleFunc("POST /tickets", ticketHandler.Create)
+	mux.HandleFunc("PUT /tickets/{id}", ticketHandler.Update)
+	mux.HandleFunc("DELETE /tickets/{id}", ticketHandler.Delete)
 
 	return mux
 }

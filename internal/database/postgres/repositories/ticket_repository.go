@@ -22,7 +22,7 @@ func NewPostgresTicketRepository(db *sql.DB) *PostgresTicketRepository {
 
 func (r *PostgresTicketRepository) List(ctx context.Context) ([]models.Ticket, error) {
 	query := `
-		SELECT id, title, description, created_at, updated_at
+		SELECT id, queue_id, title, description, created_at, updated_at
 		FROM tickets
 		ORDER BY created_at DESC
 	`
@@ -38,6 +38,7 @@ func (r *PostgresTicketRepository) List(ctx context.Context) ([]models.Ticket, e
 		var ticket models.Ticket
 		if err := rows.Scan(
 			&ticket.ID,
+			&ticket.QueueID,
 			&ticket.Title,
 			&ticket.Description,
 			&ticket.CreatedAt,
@@ -75,7 +76,7 @@ func (r *PostgresTicketRepository) Create(ctx context.Context, ticket *models.Ti
 
 func (r *PostgresTicketRepository) FindByID(ctx context.Context, id int64) (*models.Ticket, error) {
 	query := `
-		SELECT id, title, description, created_at, updated_at
+		SELECT id, queue_id, title, description, created_at, updated_at
 		FROM tickets
 		WHERE id = $1
 	`
@@ -84,6 +85,7 @@ func (r *PostgresTicketRepository) FindByID(ctx context.Context, id int64) (*mod
 	ticket := &models.Ticket{}
 	if err := row.Scan(
 		&ticket.ID,
+		&ticket.QueueID,
 		&ticket.Title,
 		&ticket.Description,
 		&ticket.CreatedAt,
@@ -113,9 +115,17 @@ func (r *PostgresTicketRepository) Delete(ctx context.Context, id int64) error {
 		DELETE FROM tickets
 		WHERE id = $1
 	`
-	_, err := r.db.ExecContext(ctx, query, id)
+	result, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
 	}
 	return nil
 }

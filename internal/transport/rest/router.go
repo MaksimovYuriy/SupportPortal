@@ -7,16 +7,27 @@ import (
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/handlers"
 )
 
-func NewRouter(ticketHandler *handlers.TicketHandler) http.Handler {
+type Handlers struct {
+	TicketHandler *handlers.TicketHandler
+	QueueHandler  *handlers.QueueHandler
+}
+
+func NewRouter(handlers *Handlers) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /health", healthHandler)
 
-	mux.HandleFunc("GET /tickets", ticketHandler.Index)
-	mux.HandleFunc("GET /tickets/{id}", ticketHandler.Show)
-	mux.HandleFunc("POST /tickets", ticketHandler.Create)
-	mux.HandleFunc("PUT /tickets/{id}", ticketHandler.Update)
-	mux.HandleFunc("DELETE /tickets/{id}", ticketHandler.Delete)
+	mux.HandleFunc("GET /tickets", handlers.TicketHandler.Index)
+	mux.HandleFunc("GET /tickets/{id}", handlers.TicketHandler.Show)
+	mux.HandleFunc("POST /tickets", handlers.TicketHandler.Create)
+	mux.HandleFunc("PUT /tickets/{id}", handlers.TicketHandler.Update)
+	mux.HandleFunc("DELETE /tickets/{id}", handlers.TicketHandler.Delete)
+
+	mux.HandleFunc("GET /queues", handlers.QueueHandler.Index)
+	mux.HandleFunc("GET /queues/{id}", handlers.QueueHandler.Show)
+	mux.HandleFunc("POST /queues", handlers.QueueHandler.Create)
+	mux.HandleFunc("PUT /queues/{id}", handlers.QueueHandler.Update)
+	mux.HandleFunc("DELETE /queues/{id}", handlers.QueueHandler.Delete)
 
 	return mux
 }

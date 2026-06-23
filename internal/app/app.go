@@ -27,7 +27,16 @@ func Run() error {
 	ticketService := services.NewTicketService(ticketRepository)
 	ticketHandler := handlers.NewTicketHandler(ticketService)
 
-	router := rest.NewRouter(ticketHandler)
+	queueRepository := repositories.NewPostgresQueueRepository(db)
+	queueService := services.NewQueueService(queueRepository)
+	queueHandler := handlers.NewQueueHandler(queueService)
+
+	handlers := &rest.Handlers{
+		TicketHandler: ticketHandler,
+		QueueHandler:  queueHandler,
+	}
+
+	router := rest.NewRouter(handlers)
 	addr := ":8080"
 
 	log.Printf("SupportPortal API started at %s", addr)

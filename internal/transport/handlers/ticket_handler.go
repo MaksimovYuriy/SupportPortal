@@ -5,15 +5,15 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/MaksimovYuriy/SupportPortal/internal/domain"
-	"github.com/MaksimovYuriy/SupportPortal/internal/service"
+	"github.com/MaksimovYuriy/SupportPortal/internal/models"
+	"github.com/MaksimovYuriy/SupportPortal/internal/services"
 )
 
 type TicketHandler struct {
-	service *service.TicketService
+	service *services.TicketService
 }
 
-func NewTicketHandler(service *service.TicketService) *TicketHandler {
+func NewTicketHandler(service *services.TicketService) *TicketHandler {
 	return &TicketHandler{
 		service: service,
 	}
@@ -35,7 +35,7 @@ func (h *TicketHandler) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TicketHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var ticket domain.Ticket
+	var ticket models.Ticket
 	if err := json.NewDecoder(r.Body).Decode(&ticket); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
@@ -73,7 +73,7 @@ func (h *TicketHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var ticket domain.Ticket
+	var ticket models.Ticket
 	if err := json.NewDecoder(r.Body).Decode(&ticket); err != nil {
 		http.Error(w, "invalid body parameters", http.StatusBadRequest)
 		return

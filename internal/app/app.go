@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/config"
-	"github.com/MaksimovYuriy/SupportPortal/internal/infra/postgres"
-	ticketrepo "github.com/MaksimovYuriy/SupportPortal/internal/repository/postgres"
-	"github.com/MaksimovYuriy/SupportPortal/internal/service"
+	"github.com/MaksimovYuriy/SupportPortal/internal/database/postgres"
+	"github.com/MaksimovYuriy/SupportPortal/internal/database/postgres/repositories"
+	"github.com/MaksimovYuriy/SupportPortal/internal/services"
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/handlers"
-	httptransport "github.com/MaksimovYuriy/SupportPortal/internal/transport/http"
+	"github.com/MaksimovYuriy/SupportPortal/internal/transport/rest"
 )
 
 func Run() error {
@@ -23,11 +23,11 @@ func Run() error {
 	}
 	defer db.Close()
 
-	ticketRepository := ticketrepo.NewPostgresTicketRepository(db)
-	ticketService := service.NewTicketService(ticketRepository)
+	ticketRepository := repositories.NewPostgresTicketRepository(db)
+	ticketService := services.NewTicketService(ticketRepository)
 	ticketHandler := handlers.NewTicketHandler(ticketService)
 
-	router := httptransport.NewRouter(ticketHandler)
+	router := rest.NewRouter(ticketHandler)
 	addr := ":8080"
 
 	log.Printf("SupportPortal API started at %s", addr)

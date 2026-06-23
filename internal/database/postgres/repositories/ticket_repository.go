@@ -1,18 +1,18 @@
-package repository
+package repositories
 
 import (
 	"context"
 	"database/sql"
 
-	"github.com/MaksimovYuriy/SupportPortal/internal/domain"
-	"github.com/MaksimovYuriy/SupportPortal/internal/repository"
+	"github.com/MaksimovYuriy/SupportPortal/internal/database"
+	"github.com/MaksimovYuriy/SupportPortal/internal/models"
 )
 
 type PostgresTicketRepository struct {
 	db *sql.DB
 }
 
-var _ repository.TicketRepository = (*PostgresTicketRepository)(nil)
+var _ database.TicketRepository = (*PostgresTicketRepository)(nil)
 
 func NewPostgresTicketRepository(db *sql.DB) *PostgresTicketRepository {
 	return &PostgresTicketRepository{
@@ -20,7 +20,7 @@ func NewPostgresTicketRepository(db *sql.DB) *PostgresTicketRepository {
 	}
 }
 
-func (r *PostgresTicketRepository) List(ctx context.Context) ([]domain.Ticket, error) {
+func (r *PostgresTicketRepository) List(ctx context.Context) ([]models.Ticket, error) {
 	query := `
 		SELECT id, title, description, created_at, updated_at
 		FROM tickets
@@ -33,9 +33,9 @@ func (r *PostgresTicketRepository) List(ctx context.Context) ([]domain.Ticket, e
 	}
 	defer rows.Close()
 
-	tickets := make([]domain.Ticket, 0)
+	tickets := make([]models.Ticket, 0)
 	for rows.Next() {
-		var ticket domain.Ticket
+		var ticket models.Ticket
 		if err := rows.Scan(
 			&ticket.ID,
 			&ticket.Title,
@@ -55,7 +55,7 @@ func (r *PostgresTicketRepository) List(ctx context.Context) ([]domain.Ticket, e
 	return tickets, nil
 }
 
-func (r *PostgresTicketRepository) Create(ctx context.Context, ticket *domain.Ticket) error {
+func (r *PostgresTicketRepository) Create(ctx context.Context, ticket *models.Ticket) error {
 	query := `
 		INSERT INTO tickets (title, description)
 		VALUES ($1, $2)
@@ -73,7 +73,7 @@ func (r *PostgresTicketRepository) Create(ctx context.Context, ticket *domain.Ti
 	return nil
 }
 
-func (r *PostgresTicketRepository) FindByID(ctx context.Context, id int64) (*domain.Ticket, error) {
+func (r *PostgresTicketRepository) FindByID(ctx context.Context, id int64) (*models.Ticket, error) {
 	query := `
 		SELECT id, title, description, created_at, updated_at
 		FROM tickets
@@ -81,7 +81,7 @@ func (r *PostgresTicketRepository) FindByID(ctx context.Context, id int64) (*dom
 	`
 
 	row := r.db.QueryRowContext(ctx, query, id)
-	ticket := &domain.Ticket{}
+	ticket := &models.Ticket{}
 	if err := row.Scan(
 		&ticket.ID,
 		&ticket.Title,
@@ -94,7 +94,7 @@ func (r *PostgresTicketRepository) FindByID(ctx context.Context, id int64) (*dom
 	return ticket, nil
 }
 
-func (r *PostgresTicketRepository) Update(ctx context.Context, ticket *domain.Ticket) error {
+func (r *PostgresTicketRepository) Update(ctx context.Context, ticket *models.Ticket) error {
 	query := `
 		UPDATE tickets
 		SET	title = $2, description = $3, updated_at = NOW()

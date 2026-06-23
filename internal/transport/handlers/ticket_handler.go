@@ -1,9 +1,7 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/models"
 	"github.com/MaksimovYuriy/SupportPortal/internal/services"
@@ -22,84 +20,74 @@ func NewTicketHandler(service *services.TicketService) *TicketHandler {
 func (h *TicketHandler) Index(w http.ResponseWriter, r *http.Request) {
 	tickets, err := h.service.List(r.Context())
 	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
-	w.Header().Set(
-		"Content-Type", "application/json",
-	)
-	if err := json.NewEncoder(w).Encode(tickets); err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+	writeJSON(w, http.StatusOK, tickets)
 }
 
 func (h *TicketHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var ticket models.Ticket
-	if err := json.NewDecoder(r.Body).Decode(&ticket); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSONBody(r, &ticket); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	if err := h.service.Create(r.Context(), &ticket); err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(ticket)
+	writeJSON(w, http.StatusCreated, ticket)
 }
 
 func (h *TicketHandler) Show(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	id, err := parsePathID(r)
 	if err != nil {
-		http.Error(w, "invalid path params", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "invalid path params")
 		return
 	}
 	ticket, err := h.service.FindByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(ticket)
+	writeJSON(w, http.StatusOK, ticket)
 }
 
 func (h *TicketHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	id, err := parsePathID(r)
 	if err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "invalid path params")
 		return
 	}
 
 	var ticket models.Ticket
-	if err := json.NewDecoder(r.Body).Decode(&ticket); err != nil {
-		http.Error(w, "invalid body parameters", http.StatusBadRequest)
+	if err := decodeJSONBody(r, &ticket); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid body parameters")
 		return
 	}
 	ticket.ID = id
 
 	if err := h.service.Update(r.Context(), &ticket); err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(ticket)
+	writeJSON(w, http.StatusOK, ticket)
 }
 
 func (h *TicketHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	id, err := parsePathID(r)
 	if err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "invalid path params")
 		return
 	}
 
 	if err := h.service.Delete(r.Context(), id); err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	writeNoContent(w)
 }

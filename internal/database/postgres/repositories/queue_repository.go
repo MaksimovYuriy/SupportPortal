@@ -3,7 +3,10 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 
+	"github.com/MaksimovYuriy/SupportPortal/internal/apperrors"
 	"github.com/MaksimovYuriy/SupportPortal/internal/database"
 	"github.com/MaksimovYuriy/SupportPortal/internal/models"
 )
@@ -29,7 +32,7 @@ func (r *PostgresQueueRepository) List(ctx context.Context) ([]models.Queue, err
 
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to execute queue query: %w", err)
 	}
 	defer rows.Close()
 
@@ -43,28 +46,28 @@ func (r *PostgresQueueRepository) List(ctx context.Context) ([]models.Queue, err
 			&queue.CreatedAt,
 			&queue.UpdatedAt,
 		); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to scan queue row: %w", err)
 		}
 
 		queues = append(queues, queue)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to iterate over queue rows: %w", err)
 	}
 	return queues, nil
 }
 
 func (r *PostgresQueueRepository) Create(ctx context.Context, queue *models.Queue) error {
 	query := `
-		INSERT INTO queues (name, is_active)
-		VALUES ($1, $2)
-		RETURNING id, created_at, updated_at
+		INSERT INTO queues (name)
+		VALUES ($1)
+		RETURNING id, is_active, created_at, updated_at
 	`
 
-	row := r.db.QueryRowContext(ctx, query, queue.Name, queue.IsActive)
-	if err := row.Scan(&queue.ID, &queue.CreatedAt, &queue.UpdatedAt); err != nil {
-		return err
+	row := r.db.QueryRowContext(ctx, query, queue.Name)
+	if err := row.Scan(&queue.ID, &queue.IsActive, &queue.CreatedAt, &queue.UpdatedAt); err != nil {
+		return fmt.Errorf("failed to scan created queue row: %w", err)
 	}
 	return nil
 }
@@ -79,7 +82,10 @@ func (r *PostgresQueueRepository) FindByID(ctx context.Context, id int64) (*mode
 	row := r.db.QueryRowContext(ctx, query, id)
 	queue := &models.Queue{}
 	if err := row.Scan(&queue.ID, &queue.Name, &queue.IsActive, &queue.CreatedAt, &queue.UpdatedAt); err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperrors.ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to scan queue row: %w", err)
 	}
 	return queue, nil
 }
@@ -94,7 +100,10 @@ func (r *PostgresQueueRepository) Update(ctx context.Context, queue *models.Queu
 
 	row := r.db.QueryRowContext(ctx, query, queue.ID, queue.Name, queue.IsActive)
 	if err := row.Scan(&queue.UpdatedAt); err != nil {
-		return err
+		if errors.Is(err, sql.ErrNoRows) {
+			return apperrors.ErrNotFound
+		}
+		return fmt.Errorf("failed to scan updated queue row: %w", err)
 	}
 	return nil
 }
@@ -107,16 +116,16 @@ func (r *PostgresQueueRepository) Delete(ctx context.Context, id int64) error {
 
 	result, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to execute delete queue query: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get rows affected for delete queue query: %w", err)
 	}
 
 	if rowsAffected == 0 {
-		return sql.ErrNoRows
+		return apperrors.ErrNotFound
 	}
 
 	return nil

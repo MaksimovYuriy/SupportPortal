@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+
+	"github.com/MaksimovYuriy/SupportPortal/internal/apperrors"
 )
 
 type errorResponse struct {
@@ -22,4 +25,15 @@ func writeNoContent(w http.ResponseWriter) {
 
 func writeError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, errorResponse{Message: message})
+}
+
+func handleError(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, ErrBadRequest):
+		writeError(w, http.StatusBadRequest, "Bad request")
+	case errors.Is(err, apperrors.ErrNotFound):
+		writeError(w, http.StatusNotFound, "Resource not found")
+	default:
+		writeError(w, http.StatusInternalServerError, "Internal server error")
+	}
 }

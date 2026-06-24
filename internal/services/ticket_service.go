@@ -34,7 +34,6 @@ func (s *TicketService) Create(ctx context.Context, ticket *models.Ticket) error
 	}
 
 	ticket.QueueID = &distributor_queue.ID
-
 	err = s.ticket_repo.Create(ctx, ticket)
 	if err != nil {
 		return err

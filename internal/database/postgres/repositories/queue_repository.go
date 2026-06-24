@@ -90,6 +90,24 @@ func (r *PostgresQueueRepository) FindByID(ctx context.Context, id int64) (*mode
 	return queue, nil
 }
 
+func (r *PostgresQueueRepository) FindByName(ctx context.Context, name string) (*models.Queue, error) {
+	query := `
+		SELECT id, name, is_active, created_at, updated_at
+		FROM queues
+		WHERE name = $1
+	`
+
+	row := r.db.QueryRowContext(ctx, query, name)
+	queue := &models.Queue{}
+	if err := row.Scan(&queue.ID, &queue.Name, &queue.IsActive, &queue.CreatedAt, &queue.UpdatedAt); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperrors.ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to scan queue row: %w", err)
+	}
+	return queue, nil
+}
+
 func (r *PostgresQueueRepository) Update(ctx context.Context, queue *models.Queue) error {
 	query := `
 		UPDATE queues

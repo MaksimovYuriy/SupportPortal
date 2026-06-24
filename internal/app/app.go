@@ -24,11 +24,12 @@ func Run() error {
 	defer db.Close()
 
 	ticketRepository := repositories.NewPostgresTicketRepository(db)
-	ticketService := services.NewTicketService(ticketRepository)
-	ticketHandler := handlers.NewTicketHandler(ticketService)
-
 	queueRepository := repositories.NewPostgresQueueRepository(db)
+
+	ticketService := services.NewTicketService(ticketRepository, queueRepository)
 	queueService := services.NewQueueService(queueRepository)
+
+	ticketHandler := handlers.NewTicketHandler(ticketService)
 	queueHandler := handlers.NewQueueHandler(queueService)
 
 	handlers := &rest.Handlers{

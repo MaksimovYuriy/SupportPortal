@@ -5,6 +5,7 @@ import (
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/models"
 	"github.com/MaksimovYuriy/SupportPortal/internal/services"
+	"github.com/MaksimovYuriy/SupportPortal/internal/transport/dto"
 )
 
 type TicketHandler struct {
@@ -23,22 +24,25 @@ func (h *TicketHandler) Index(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, tickets)
+	writeJSON(w, http.StatusOK, dto.NewListTicketsResponse(tickets))
 }
 
 func (h *TicketHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var ticket models.Ticket
-	if err := decodeJSONBody(r, &ticket); err != nil {
+	var request dto.CreateTicketRequest
+	if err := decodeJSONBody(r, &request); err != nil {
 		handleError(w, err)
 		return
 	}
-
+	ticket := models.Ticket{
+		Title:       request.Title,
+		Description: request.Description,
+	}
 	if err := h.service.Create(r.Context(), &ticket); err != nil {
 		handleError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, ticket)
+	writeJSON(w, http.StatusCreated, dto.NewTicketResponse(ticket))
 }
 
 func (h *TicketHandler) Show(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +56,7 @@ func (h *TicketHandler) Show(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, ticket)
+	writeJSON(w, http.StatusOK, dto.NewTicketResponse(*ticket))
 }
 
 func (h *TicketHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -61,11 +65,14 @@ func (h *TicketHandler) Update(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-
-	var ticket models.Ticket
-	if err := decodeJSONBody(r, &ticket); err != nil {
+	var request dto.UpdateTicketRequest
+	if err := decodeJSONBody(r, &request); err != nil {
 		handleError(w, err)
 		return
+	}
+	ticket := models.Ticket{
+		Title:       request.Title,
+		Description: request.Description,
 	}
 	ticket.ID = id
 
@@ -74,7 +81,7 @@ func (h *TicketHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, ticket)
+	writeJSON(w, http.StatusOK, dto.NewTicketResponse(ticket))
 }
 
 func (h *TicketHandler) Delete(w http.ResponseWriter, r *http.Request) {

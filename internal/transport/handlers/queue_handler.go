@@ -5,6 +5,7 @@ import (
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/models"
 	"github.com/MaksimovYuriy/SupportPortal/internal/services"
+	"github.com/MaksimovYuriy/SupportPortal/internal/transport/dto"
 )
 
 type QueueHandler struct {
@@ -23,21 +24,24 @@ func (h *QueueHandler) Index(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, queues)
+	writeJSON(w, http.StatusOK, dto.NewListQueuesResponse(queues))
 }
 
 func (h *QueueHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var queue models.Queue
-	if err := decodeJSONBody(r, &queue); err != nil {
+	var request dto.CreateQueueRequest
+	if err := decodeJSONBody(r, &request); err != nil {
 		handleError(w, err)
 		return
+	}
+	queue := models.Queue{
+		Name: request.Name,
 	}
 
 	if err := h.queueService.Create(r.Context(), &queue); err != nil {
 		handleError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, queue)
+	writeJSON(w, http.StatusCreated, dto.NewQueueResponse(queue))
 }
 
 func (h *QueueHandler) Show(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +55,7 @@ func (h *QueueHandler) Show(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, queue)
+	writeJSON(w, http.StatusOK, dto.NewQueueResponse(*queue))
 }
 
 func (h *QueueHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -61,10 +65,14 @@ func (h *QueueHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var queue models.Queue
-	if err := decodeJSONBody(r, &queue); err != nil {
+	var request dto.UpdateQueueRequest
+	if err := decodeJSONBody(r, &request); err != nil {
 		handleError(w, err)
 		return
+	}
+
+	queue := models.Queue{
+		Name: request.Name,
 	}
 	queue.ID = id
 
@@ -72,7 +80,7 @@ func (h *QueueHandler) Update(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, queue)
+	writeJSON(w, http.StatusOK, dto.NewQueueResponse(queue))
 }
 
 func (h *QueueHandler) Delete(w http.ResponseWriter, r *http.Request) {

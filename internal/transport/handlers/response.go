@@ -4,13 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/apperrors"
+	"github.com/MaksimovYuriy/SupportPortal/internal/transport/dto"
 )
-
-type errorResponse struct {
-	Message string `json:"message"`
-}
 
 func writeJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -23,8 +21,14 @@ func writeNoContent(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func writeError(w http.ResponseWriter, status int, message string) {
-	writeJSON(w, status, errorResponse{Message: message})
+func statusCodeName(status int) string {
+	return strings.ToLower(
+		strings.ReplaceAll(http.StatusText(status), " ", "_"),
+	)
+}
+
+func writeError(w http.ResponseWriter, status int, message string, details ...string) {
+	writeJSON(w, status, dto.NewErrorResponse(statusCodeName(status), message, details...))
 }
 
 func handleError(w http.ResponseWriter, err error) {

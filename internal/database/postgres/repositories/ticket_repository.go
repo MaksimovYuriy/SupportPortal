@@ -63,12 +63,12 @@ func (r *PostgresTicketRepository) List(ctx context.Context) ([]models.Ticket, e
 
 func (r *PostgresTicketRepository) Create(ctx context.Context, ticket *models.Ticket) error {
 	query := `
-		INSERT INTO tickets (title, description)
-		VALUES ($1, $2)
+		INSERT INTO tickets (title, description, queue_id)
+		VALUES ($1, $2, $3)
 		RETURNING id, created_at, updated_at
 	`
 
-	row := r.db.QueryRowContext(ctx, query, ticket.Title, ticket.Description)
+	row := r.db.QueryRowContext(ctx, query, ticket.Title, ticket.Description, ticket.QueueID)
 	if err := row.Scan(
 		&ticket.ID,
 		&ticket.CreatedAt,

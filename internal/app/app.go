@@ -7,7 +7,6 @@ import (
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/config"
 	"github.com/MaksimovYuriy/SupportPortal/internal/database/postgres"
-	"github.com/MaksimovYuriy/SupportPortal/internal/database/postgres/repositories"
 	"github.com/MaksimovYuriy/SupportPortal/internal/services"
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/handlers"
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/rest"
@@ -28,18 +27,12 @@ func Run() error {
 		}
 	}()
 
-	ticketRepository := repositories.NewPostgresTicketRepository(db)
-	queueRepository := repositories.NewPostgresQueueRepository(db)
-
-	ticketService := services.NewTicketService(ticketRepository, queueRepository)
-	queueService := services.NewQueueService(queueRepository)
-
-	ticketHandler := handlers.NewTicketHandler(ticketService)
-	queueHandler := handlers.NewQueueHandler(queueService)
+	userRepository := postgres.NewUserRepository(db)
+	userService := services.NewUserService(userRepository)
+	userHandler := handlers.NewUserHandler(*userService)
 
 	handlers := &rest.Handlers{
-		TicketHandler: ticketHandler,
-		QueueHandler:  queueHandler,
+		UserHandler: userHandler,
 	}
 
 	router := rest.NewRouter(handlers)

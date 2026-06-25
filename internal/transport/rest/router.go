@@ -8,8 +8,7 @@ import (
 )
 
 type Handlers struct {
-	TicketHandler *handlers.TicketHandler
-	QueueHandler  *handlers.QueueHandler
+	UserHandler *handlers.UserHandler
 }
 
 func NewRouter(handlers *Handlers) http.Handler {
@@ -17,17 +16,9 @@ func NewRouter(handlers *Handlers) http.Handler {
 
 	mux.HandleFunc("GET /health", healthHandler)
 
-	mux.HandleFunc("GET /tickets", handlers.TicketHandler.Index)
-	mux.HandleFunc("GET /tickets/{id}", handlers.TicketHandler.Show)
-	mux.HandleFunc("POST /tickets", handlers.TicketHandler.Create)
-	mux.HandleFunc("PUT /tickets/{id}", handlers.TicketHandler.Update)
-	mux.HandleFunc("DELETE /tickets/{id}", handlers.TicketHandler.Delete)
-
-	mux.HandleFunc("GET /queues", handlers.QueueHandler.Index)
-	mux.HandleFunc("GET /queues/{id}", handlers.QueueHandler.Show)
-	mux.HandleFunc("POST /queues", handlers.QueueHandler.Create)
-	mux.HandleFunc("PUT /queues/{id}", handlers.QueueHandler.Update)
-	mux.HandleFunc("DELETE /queues/{id}", handlers.QueueHandler.Delete)
+	mux.HandleFunc("GET /users", handlers.UserHandler.Index)
+	mux.HandleFunc("GET /users/{id}", handlers.UserHandler.Show)
+	mux.HandleFunc("POST /users", handlers.UserHandler.Create)
 
 	return mux
 }

@@ -1,7 +1,7 @@
 DB_URL=postgres://postgres:postgres@localhost:5433/supportportal_development?sslmode=disable
 APP_BIN=bin/supportportal
 
-.PHONY: run build test vet fmt fmt-check lint ci db-up db-down migrate-up migrate-down migrate-status
+.PHONY: run build test vet fmt fmt-check lint ci compose-up compose-down db-up db-down migrate-up migrate-down migrate-status
 
 run:
 	go run ./cmd/api
@@ -26,11 +26,17 @@ lint:
 
 ci: fmt-check vet test build
 
-db-up:
+compose-up:
 	docker compose up -d
 
-db-down:
+compose-down:
 	docker compose down
+
+db-up:
+	docker compose up -d postgres
+
+db-down:
+	docker compose stop postgres
 
 migrate-up:
 	goose -dir migrations postgres "$(DB_URL)" up

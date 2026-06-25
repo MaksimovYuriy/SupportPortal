@@ -1,4 +1,21 @@
 services:
+  api:
+    build:
+      context: .
+    container_name: supportportal-api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: supportportal_development
+      DB_SSL_MODE: disable
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     image: postgres:16
     container_name: supportportal-postgres
@@ -10,6 +27,11 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d supportportal_development"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

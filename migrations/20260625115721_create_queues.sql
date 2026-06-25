@@ -1,11 +1,11 @@
 -- +goose Up
-CREATE TABLE tickets (
+CREATE TABLE queues (
     id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- +goose Down
-DROP TABLE IF EXISTS tickets;
+DROP TABLE IF EXISTS queues;

@@ -25,7 +25,7 @@ func (s *TicketService) List(ctx context.Context) ([]models.Ticket, error) {
 }
 
 func (s *TicketService) Create(ctx context.Context, ticket *models.Ticket) error {
-	distributorQueue, err := s.queueRepo.FindByName(ctx, "Distributor")
+	distributorQueue, err := s.queueRepo.FindByName(ctx, "Distribution")
 	if err != nil {
 		return err
 	}

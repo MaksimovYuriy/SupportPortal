@@ -1,0 +1,13 @@
+-- +goose Up
+CREATE TABLE agents (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    is_available BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    user_id INT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- +goose Down
+DROP TABLE IF EXISTS agents;

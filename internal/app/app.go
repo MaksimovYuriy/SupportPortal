@@ -28,11 +28,17 @@ func Run() error {
 	}()
 
 	userRepository := postgres.NewUserRepository(db)
+	agentRepository := postgres.NewAgentRepository(db)
+
 	userService := services.NewUserService(userRepository)
-	userHandler := handlers.NewUserHandler(*userService)
+	agentService := services.NewAgentService(agentRepository)
+
+	userHandler := handlers.NewUserHandler(userService)
+	agentHandler := handlers.NewAgentHandler(agentService)
 
 	handlers := &rest.Handlers{
-		UserHandler: userHandler,
+		UserHandler:  userHandler,
+		AgentHandler: agentHandler,
 	}
 
 	router := rest.NewRouter(handlers)

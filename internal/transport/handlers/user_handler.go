@@ -9,10 +9,10 @@ import (
 )
 
 type UserHandler struct {
-	userService services.UserService
+	userService *services.UserService
 }
 
-func NewUserHandler(userService services.UserService) *UserHandler {
+func NewUserHandler(userService *services.UserService) *UserHandler {
 	return &UserHandler{userService: userService}
 }
 
@@ -29,6 +29,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var request dto.UserRequest
 	if err := decodeJSONBody(r, &request); err != nil {
 		handleError(w, err)
+		return
 	}
 	user := models.User{
 		Email:        request.Email,
@@ -40,17 +41,19 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, user)
+	writeJSON(w, http.StatusCreated, dto.NewUserResponse(&user))
 }
 
 func (h *UserHandler) Show(w http.ResponseWriter, r *http.Request) {
 	id, err := parsePathID(r)
 	if err != nil {
 		handleError(w, err)
+		return
 	}
 	user, err := h.userService.FindUserByID(r.Context(), id)
 	if err != nil {
 		handleError(w, err)
+		return
 	}
-	writeJSON(w, http.StatusOK, user)
+	writeJSON(w, http.StatusOK, dto.NewUserResponse(user))
 }

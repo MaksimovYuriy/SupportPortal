@@ -1,14 +1,18 @@
 package dto
 
-import "github.com/MaksimovYuriy/SupportPortal/internal/models"
+import (
+	"time"
+
+	"github.com/MaksimovYuriy/SupportPortal/internal/models"
+)
 
 type UserResponse struct {
-	ID        int    `json:"id"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
-	IsActive  bool   `json:"is_active"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	ID        int       `json:"id"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	IsActive  bool      `json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type UserListResponse struct {

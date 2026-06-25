@@ -34,7 +34,9 @@ func (r *PostgresTicketRepository) List(ctx context.Context) ([]models.Ticket, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute ticket query: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	tickets := make([]models.Ticket, 0)
 	for rows.Next() {

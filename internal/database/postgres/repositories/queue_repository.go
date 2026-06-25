@@ -34,7 +34,9 @@ func (r *PostgresQueueRepository) List(ctx context.Context) ([]models.Queue, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute queue query: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	queues := make([]models.Queue, 0)
 	for rows.Next() {

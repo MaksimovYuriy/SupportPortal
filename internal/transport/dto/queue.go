@@ -28,12 +28,12 @@ func NewQueueResponse(queue *models.Queue) *QueueResponse {
 	}
 }
 
-func NewQueueListResponse(queues []*models.Queue) []*QueueResponse {
+func NewQueueListResponse(queues []*models.Queue) *QueueListResponse {
 	queueResponses := make([]*QueueResponse, len(queues))
 	for i, queue := range queues {
 		queueResponses[i] = NewQueueResponse(queue)
 	}
-	return queueResponses
+	return &QueueListResponse{Queues: queueResponses}
 }
 
 type QueueRequest struct {

@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/MaksimovYuriy/SupportPortal/internal/models"
 	"github.com/MaksimovYuriy/SupportPortal/internal/services"
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/dto"
 )
@@ -36,4 +37,22 @@ func (h *AgentHandler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, dto.NewAgentResponse(agent))
+}
+
+func (h *AgentHandler) AssignToQueue(w http.ResponseWriter, r *http.Request) {
+	var request dto.AgentQueueRequest
+	if err := decodeJSONBody(r, &request); err != nil {
+		handleError(w, err)
+		return
+	}
+	agentQueue := models.AgentQueue{
+		AgentID: request.AgentID,
+		QueueID: request.QueueID,
+	}
+	err := h.agentService.AssignToQueue(r.Context(), &agentQueue)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, dto.NewAgentQueueResponse(&agentQueue))
 }

@@ -24,6 +24,7 @@ func NewRouter(handlers *Handlers) http.Handler {
 
 	mux.HandleFunc("GET /agents", handlers.AgentHandler.Index)
 	mux.HandleFunc("GET /agents/{id}", handlers.AgentHandler.Show)
+	mux.HandleFunc("POST /agents/assign_to_queue", handlers.AgentHandler.AssignToQueue)
 
 	mux.HandleFunc("GET /queues", handlers.QueueHandler.Index)
 	mux.HandleFunc("GET /queues/{id}", handlers.QueueHandler.Show)

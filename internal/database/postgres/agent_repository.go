@@ -66,9 +66,9 @@ func (r *AgentRepository) FindByID(ctx context.Context, id int64) (*models.Agent
 		&agent.ID,
 		&agent.Name,
 		&agent.IsAvailable,
+		&agent.UserID,
 		&agent.CreatedAt,
 		&agent.UpdatedAt,
-		&agent.UserID,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, apperrors.ErrNotFound

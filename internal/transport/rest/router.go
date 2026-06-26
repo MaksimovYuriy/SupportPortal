@@ -10,6 +10,7 @@ import (
 type Handlers struct {
 	UserHandler  *handlers.UserHandler
 	AgentHandler *handlers.AgentHandler
+	QueueHandler *handlers.QueueHandler
 }
 
 func NewRouter(handlers *Handlers) http.Handler {
@@ -23,6 +24,10 @@ func NewRouter(handlers *Handlers) http.Handler {
 
 	mux.HandleFunc("GET /agents", handlers.AgentHandler.Index)
 	mux.HandleFunc("GET /agents/{id}", handlers.AgentHandler.Show)
+
+	mux.HandleFunc("GET /queues", handlers.QueueHandler.Index)
+	mux.HandleFunc("GET /queues/{id}", handlers.QueueHandler.Show)
+	mux.HandleFunc("POST /queues", handlers.QueueHandler.Create)
 
 	return mux
 }

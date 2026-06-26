@@ -8,11 +8,12 @@ import (
 )
 
 type UserService struct {
-	userRepo database.UserRepository
+	userRepo     database.UserRepository
+	agentService *AgentService
 }
 
-func NewUserService(userRepo database.UserRepository) *UserService {
-	return &UserService{userRepo: userRepo}
+func NewUserService(userRepo database.UserRepository, agentService *AgentService) *UserService {
+	return &UserService{userRepo: userRepo, agentService: agentService}
 }
 
 func (s *UserService) CreateUser(ctx context.Context, user *models.User) error {
@@ -20,7 +21,10 @@ func (s *UserService) CreateUser(ctx context.Context, user *models.User) error {
 	if err != nil {
 		return err
 	}
-
+	err = s.agentService.CreateAgentForUser(ctx, user)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

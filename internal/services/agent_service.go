@@ -32,3 +32,12 @@ func (s *AgentService) FindByID(ctx context.Context, id int64) (*models.Agent, e
 	}
 	return agent, nil
 }
+
+func (s *AgentService) CreateAgentForUser(ctx context.Context, user *models.User) error {
+	err := s.agentRepo.CreateForUser(ctx, user)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -37,6 +37,43 @@ func (r *UserRepository) Create(ctx context.Context, user *models.User) error {
 	return nil
 }
 
+func (r *UserRepository) CreateWithAgent(ctx context.Context, user *models.User) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("Failed to begin user transaction: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	userQuery := `
+		INSERT INTO users (email, password_hash, role, is_active)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at, updated_at
+	`
+	userRow := tx.QueryRowContext(ctx, userQuery, user.Email, user.PasswordHash, user.Role, user.IsActive)
+	if err := userRow.Scan(
+		&user.ID,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	); err != nil {
+		return fmt.Errorf("Failed to scan user row: %w", err)
+	}
+
+	agentQuery := `
+		INSERT INTO agents (name, is_available, user_id)
+		VALUES ($1, $2, $3)
+	`
+	if _, err := tx.ExecContext(ctx, agentQuery, user.Email, user.IsActive, user.ID); err != nil {
+		return fmt.Errorf("Failed creating agent for user: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("Failed to commit user transaction: %w", err)
+	}
+	return nil
+}
+
 func (r *UserRepository) List(ctx context.Context) ([]*models.User, error) {
 	query := `
 		SELECT id, email, password_hash, role, is_active, created_at, updated_at

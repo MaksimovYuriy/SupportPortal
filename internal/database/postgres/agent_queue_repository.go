@@ -105,3 +105,20 @@ func (r *AgentQueueRepository) FindByQueueID(ctx context.Context, id int64) ([]*
 	}
 	return agents, nil
 }
+
+func (r *AgentQueueRepository) Exists(ctx context.Context, agentID int64, queueID int64) (bool, error) {
+	query := `
+		SELECT 1
+		FROM agent_queues
+		WHERE agent_id = $1 AND queue_id = $2
+	`
+	row := r.db.QueryRowContext(ctx, query, agentID, queueID)
+	var exists int
+	if err := row.Scan(&exists); err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, fmt.Errorf("Failed to scan agent queue existence: %w", err)
+	}
+	return exists == 1, nil
+}

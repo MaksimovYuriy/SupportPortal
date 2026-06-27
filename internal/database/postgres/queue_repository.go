@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/MaksimovYuriy/SupportPortal/internal/apperrors"
 	"github.com/MaksimovYuriy/SupportPortal/internal/database"
 	"github.com/MaksimovYuriy/SupportPortal/internal/models"
 )
@@ -46,6 +47,10 @@ func (r *QueueRepository) List(ctx context.Context) ([]*models.Queue, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed queue query: %w", err)
 	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
 	queues := make([]*models.Queue, 0)
 	for rows.Next() {
 		var queue models.Queue
@@ -59,6 +64,9 @@ func (r *QueueRepository) List(ctx context.Context) ([]*models.Queue, error) {
 			return nil, fmt.Errorf("Failed to scan queue row: %w", err)
 		}
 		queues = append(queues, &queue)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("Error iterating over queue rows: %w", err)
 	}
 	return queues, nil
 }
@@ -78,6 +86,9 @@ func (r *QueueRepository) FindByID(ctx context.Context, id int64) (*models.Queue
 		&queue.CreatedAt,
 		&queue.UpdatedAt,
 	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, apperrors.ErrNotFound
+		}
 		return nil, fmt.Errorf("Failed to scan queue row: %w", err)
 	}
 	return &queue, nil

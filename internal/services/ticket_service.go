@@ -9,10 +9,11 @@ import (
 )
 
 type TicketService struct {
-	ticketRepo   database.TicketRepository
-	flowRepo     database.FlowRepository
-	flowStepRepo database.FlowStepRepository
-	agentRepo    database.AgentRepository
+	ticketRepo     database.TicketRepository
+	flowRepo       database.FlowRepository
+	flowStepRepo   database.FlowStepRepository
+	agentRepo      database.AgentRepository
+	agentQueueRepo database.AgentQueueRepository
 }
 
 func NewTicketService(
@@ -20,12 +21,14 @@ func NewTicketService(
 	flowRepo database.FlowRepository,
 	flowStepRepo database.FlowStepRepository,
 	agentRepo database.AgentRepository,
+	agentQueueRepo database.AgentQueueRepository,
 ) *TicketService {
 	return &TicketService{
-		ticketRepo:   ticketRepo,
-		flowRepo:     flowRepo,
-		flowStepRepo: flowStepRepo,
-		agentRepo:    agentRepo,
+		ticketRepo:     ticketRepo,
+		flowRepo:       flowRepo,
+		flowStepRepo:   flowStepRepo,
+		agentRepo:      agentRepo,
+		agentQueueRepo: agentQueueRepo,
 	}
 }
 
@@ -102,8 +105,30 @@ func (s *TicketService) AssignToAgent(ctx context.Context, ticketID int64, agent
 	if ticket.Status != models.TicketStatusInQueue || ticket.CurrentFlowStepID == nil {
 		return apperrors.ErrValidation
 	}
-	if _, err := s.agentRepo.FindByID(ctx, agentID); err != nil {
+	currentStep, err := s.flowStepRepo.FindByID(ctx, *ticket.CurrentFlowStepID)
+	if err != nil {
 		return err
+	}
+	agent, err := s.agentRepo.FindByID(ctx, agentID)
+	if err != nil {
+		return err
+	}
+	if !agent.IsAvailable {
+		return apperrors.ErrValidation
+	}
+	hasQueue, err := s.agentQueueRepo.Exists(ctx, agentID, int64(currentStep.QueueID))
+	if err != nil {
+		return err
+	}
+	if !hasQueue {
+		return apperrors.ErrValidation
+	}
+	hasActiveTicket, err := s.ticketRepo.HasInProgressForAgent(ctx, agentID)
+	if err != nil {
+		return err
+	}
+	if hasActiveTicket {
+		return apperrors.ErrValidation
 	}
 
 	ticket.AssignedAgentID = &agentID

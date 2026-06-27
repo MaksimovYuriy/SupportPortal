@@ -148,6 +148,24 @@ func (r *TicketRepository) ListByStatus(ctx context.Context, status string, limi
 	return tickets, nil
 }
 
+func (r *TicketRepository) HasInProgressForAgent(ctx context.Context, agentID int64) (bool, error) {
+	query := `
+		SELECT 1
+		FROM tickets
+		WHERE assigned_agent_id = $1 AND status = $2
+		LIMIT 1
+	`
+	row := r.db.QueryRowContext(ctx, query, agentID, models.TicketStatusInProgress)
+	var exists int
+	if err := row.Scan(&exists); err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, fmt.Errorf("Failed to scan agent active ticket existence: %w", err)
+	}
+	return exists == 1, nil
+}
+
 type ticketScanner interface {
 	Scan(dest ...any) error
 }

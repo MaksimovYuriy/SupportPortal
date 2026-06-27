@@ -16,6 +16,9 @@ func NewQueueService(queueRepo database.QueueRepository) *QueueService {
 }
 
 func (s *QueueService) Create(ctx context.Context, queue *models.Queue) error {
+	if err := queue.Validate(); err != nil {
+		return err
+	}
 	err := s.queueRepo.Create(ctx, queue)
 	if err != nil {
 		return err

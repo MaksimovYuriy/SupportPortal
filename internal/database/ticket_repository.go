@@ -12,4 +12,5 @@ type TicketRepository interface {
 	FindByID(ctx context.Context, id int64) (*models.Ticket, error)
 	UpdateState(ctx context.Context, ticket *models.Ticket) error
 	ListByStatus(ctx context.Context, status string, limit int) ([]*models.Ticket, error)
+	HasInProgressForAgent(ctx context.Context, agentID int64) (bool, error)
 }

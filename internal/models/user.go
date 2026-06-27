@@ -1,6 +1,11 @@
 package models
 
-import "time"
+import (
+	"strings"
+	"time"
+
+	"github.com/MaksimovYuriy/SupportPortal/internal/apperrors"
+)
 
 type User struct {
 	ID           int       `json:"id"`
@@ -16,3 +21,15 @@ const (
 	UserRoleAdmin = "admin"
 	UserRoleAgent = "agent"
 )
+
+func (u *User) Validate() error {
+	if strings.TrimSpace(u.Email) == "" || strings.TrimSpace(u.PasswordHash) == "" {
+		return apperrors.ErrValidation
+	}
+	switch u.Role {
+	case UserRoleAdmin, UserRoleAgent:
+		return nil
+	default:
+		return apperrors.ErrValidation
+	}
+}

@@ -45,6 +45,9 @@ func (s *AgentService) CreateAgentForUser(ctx context.Context, user *models.User
 }
 
 func (s *AgentService) AssignToQueue(ctx context.Context, agentQueue *models.AgentQueue) error {
+	if err := agentQueue.Validate(); err != nil {
+		return err
+	}
 	if _, err := s.agentRepo.FindByID(ctx, agentQueue.AgentID); err != nil {
 		return err
 	}

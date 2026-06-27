@@ -39,10 +39,10 @@ db-down:
 	docker compose stop postgres
 
 migrate-up:
-	goose -dir migrations postgres "$(DB_URL)" up
+	GOOSE_DRIVER=postgres GOOSE_DBSTRING="$(DB_URL)" GOOSE_MIGRATION_DIR=migrations goose up
 
 migrate-down:
-	goose -dir migrations postgres "$(DB_URL)" down
+	GOOSE_DRIVER=postgres GOOSE_DBSTRING="$(DB_URL)" GOOSE_MIGRATION_DIR=migrations goose down
 
 migrate-status:
-	goose -dir migrations postgres "$(DB_URL)" status
+	GOOSE_DRIVER=postgres GOOSE_DBSTRING="$(DB_URL)" GOOSE_MIGRATION_DIR=migrations goose status

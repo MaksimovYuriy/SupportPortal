@@ -8,21 +8,18 @@ import (
 )
 
 type UserService struct {
-	userRepo     database.UserRepository
-	agentService *AgentService
+	userRepo database.UserRepository
 }
 
-func NewUserService(userRepo database.UserRepository, agentService *AgentService) *UserService {
-	return &UserService{userRepo: userRepo, agentService: agentService}
+func NewUserService(userRepo database.UserRepository) *UserService {
+	return &UserService{userRepo: userRepo}
 }
 
 func (s *UserService) CreateUser(ctx context.Context, user *models.User) error {
-	err := s.userRepo.Create(ctx, user)
-	if err != nil {
+	if err := user.Validate(); err != nil {
 		return err
 	}
-	err = s.agentService.CreateAgentForUser(ctx, user)
-	if err != nil {
+	if err := s.userRepo.CreateWithAgent(ctx, user); err != nil {
 		return err
 	}
 	return nil

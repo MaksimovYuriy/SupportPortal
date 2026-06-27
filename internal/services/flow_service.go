@@ -23,8 +23,12 @@ func (s *FlowService) Create(ctx context.Context, flow *models.Flow, steps []*mo
 		return err
 	}
 	for _, step := range steps {
-		if _, err := s.queueRepo.FindByID(ctx, int64(step.QueueID)); err != nil {
+		queue, err := s.queueRepo.FindByID(ctx, int64(step.QueueID))
+		if err != nil {
 			return err
+		}
+		if !queue.IsActive {
+			return apperrors.ErrValidation
 		}
 	}
 	if err := s.flowRepo.CreateWithSteps(ctx, flow, steps); err != nil {

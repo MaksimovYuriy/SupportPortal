@@ -36,10 +36,10 @@ func Run() error {
 	ticketRepository := postgres.NewTicketRepository(db)
 
 	agentService := services.NewAgentService(agentRepository, queueRepository, agentQueueRepository)
-	userService := services.NewUserService(userRepository, agentService)
+	userService := services.NewUserService(userRepository)
 	queueService := services.NewQueueService(queueRepository)
 	flowService := services.NewFlowService(flowRepository, flowStepRepository, queueRepository)
-	ticketService := services.NewTicketService(ticketRepository, flowRepository, flowStepRepository, agentRepository)
+	ticketService := services.NewTicketService(ticketRepository, flowRepository, flowStepRepository, agentRepository, agentQueueRepository)
 
 	userHandler := handlers.NewUserHandler(userService)
 	agentHandler := handlers.NewAgentHandler(agentService)

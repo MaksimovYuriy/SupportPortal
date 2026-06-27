@@ -36,7 +36,12 @@ func (h *FlowHandler) Show(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, dto.NewFlowResponse(flow))
+	steps, err := h.flowService.FindStepsByFlowID(r.Context(), id)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, dto.NewFlowResponseWithSteps(flow, steps))
 }
 
 func (h *FlowHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -50,11 +55,19 @@ func (h *FlowHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Description: request.Description,
 		IsActive:    request.IsActive,
 	}
-	if err := h.flowService.Create(r.Context(), &flow); err != nil {
+	steps := make([]*models.FlowStep, len(request.Steps))
+	for i, stepRequest := range request.Steps {
+		steps[i] = &models.FlowStep{
+			QueueID:  stepRequest.QueueID,
+			Position: stepRequest.Position,
+			Name:     stepRequest.Name,
+		}
+	}
+	if err := h.flowService.Create(r.Context(), &flow, steps); err != nil {
 		handleError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, dto.NewFlowResponse(&flow))
+	writeJSON(w, http.StatusCreated, dto.NewFlowResponseWithSteps(&flow, steps))
 }
 
 func (h *FlowHandler) Delete(w http.ResponseWriter, r *http.Request) {

@@ -37,6 +37,52 @@ func (r *FlowRepository) Create(ctx context.Context, flow *models.Flow) error {
 	return nil
 }
 
+func (r *FlowRepository) CreateWithSteps(ctx context.Context, flow *models.Flow, steps []*models.FlowStep) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("Failed to begin flow transaction: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	flowQuery := `
+		INSERT INTO flows (name, description, is_active)
+		VALUES ($1, $2, $3)
+		RETURNING id, created_at, updated_at
+	`
+	flowRow := tx.QueryRowContext(ctx, flowQuery, flow.Name, flow.Description, flow.IsActive)
+	if err := flowRow.Scan(
+		&flow.ID,
+		&flow.CreatedAt,
+		&flow.UpdatedAt,
+	); err != nil {
+		return fmt.Errorf("Failed to scan flow row: %w", err)
+	}
+
+	stepQuery := `
+		INSERT INTO flow_steps (flow_id, queue_id, position, name)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at, updated_at
+	`
+	for _, step := range steps {
+		step.FlowID = flow.ID
+		stepRow := tx.QueryRowContext(ctx, stepQuery, step.FlowID, step.QueueID, step.Position, step.Name)
+		if err := stepRow.Scan(
+			&step.ID,
+			&step.CreatedAt,
+			&step.UpdatedAt,
+		); err != nil {
+			return fmt.Errorf("Failed to scan flow step row: %w", err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("Failed to commit flow transaction: %w", err)
+	}
+	return nil
+}
+
 func (r *FlowRepository) Delete(ctx context.Context, id int64) error {
 	query := `
 		DELETE FROM flows

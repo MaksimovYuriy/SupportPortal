@@ -32,11 +32,12 @@ func Run() error {
 	queueRepository := postgres.NewQueueRepository(db)
 	agentQueueRepository := postgres.NewAgentQueueRepository(db)
 	flowRepository := postgres.NewFlowRepository(db)
+	flowStepRepository := postgres.NewFlowStepRepository(db)
 
 	agentService := services.NewAgentService(agentRepository, queueRepository, agentQueueRepository)
 	userService := services.NewUserService(userRepository, agentService)
 	queueService := services.NewQueueService(queueRepository)
-	flowService := services.NewFlowService(flowRepository)
+	flowService := services.NewFlowService(flowRepository, flowStepRepository, queueRepository)
 
 	userHandler := handlers.NewUserHandler(userService)
 	agentHandler := handlers.NewAgentHandler(agentService)

@@ -35,6 +35,8 @@ func handleError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, ErrBadRequest):
 		writeError(w, http.StatusBadRequest, "Bad request")
+	case errors.Is(err, apperrors.ErrValidation):
+		writeError(w, http.StatusBadRequest, "Validation error")
 	case errors.Is(err, apperrors.ErrNotFound):
 		writeError(w, http.StatusNotFound, "Resource not found")
 	default:

@@ -1,6 +1,11 @@
 package models
 
-import "time"
+import (
+	"strings"
+	"time"
+
+	"github.com/MaksimovYuriy/SupportPortal/internal/apperrors"
+)
 
 type Flow struct {
 	ID          int       `json:"id"`
@@ -9,4 +14,11 @@ type Flow struct {
 	IsActive    bool      `json:"is_active"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func (f *Flow) Validate() error {
+	if strings.TrimSpace(f.Name) == "" {
+		return apperrors.ErrValidation
+	}
+	return nil
 }

@@ -8,6 +8,7 @@ import (
 
 type FlowRepository interface {
 	Create(ctx context.Context, flow *models.Flow) error
+	CreateWithSteps(ctx context.Context, flow *models.Flow, steps []*models.FlowStep) error
 	Delete(ctx context.Context, id int64) error
 	List(ctx context.Context) ([]*models.Flow, error)
 	FindByID(ctx context.Context, id int64) (*models.Flow, error)

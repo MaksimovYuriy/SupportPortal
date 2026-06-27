@@ -70,8 +70,8 @@ func (s *TicketService) ListNew(ctx context.Context, limit int) ([]*models.Ticke
 	return s.listByStatus(ctx, models.TicketStatusNew, limit)
 }
 
-func (s *TicketService) ListWaitingTransition(ctx context.Context, limit int) ([]*models.Ticket, error) {
-	return s.listByStatus(ctx, models.TicketStatusWaitingTransition, limit)
+func (s *TicketService) ListInQueue(ctx context.Context, limit int) ([]*models.Ticket, error) {
+	return s.listByStatus(ctx, models.TicketStatusInQueue, limit)
 }
 
 func (s *TicketService) StartRoute(ctx context.Context, ticketID int64) error {
@@ -111,25 +111,12 @@ func (s *TicketService) AssignToAgent(ctx context.Context, ticketID int64, agent
 	return s.ticketRepo.UpdateState(ctx, ticket)
 }
 
-func (s *TicketService) ConfirmStep(ctx context.Context, ticketID int64) error {
+func (s *TicketService) CompleteCurrentStep(ctx context.Context, ticketID int64) error {
 	ticket, err := s.ticketRepo.FindByID(ctx, ticketID)
 	if err != nil {
 		return err
 	}
 	if ticket.Status != models.TicketStatusInProgress || ticket.CurrentFlowStepID == nil {
-		return apperrors.ErrValidation
-	}
-
-	ticket.Status = models.TicketStatusWaitingTransition
-	return s.ticketRepo.UpdateState(ctx, ticket)
-}
-
-func (s *TicketService) AdvanceRoute(ctx context.Context, ticketID int64) error {
-	ticket, err := s.ticketRepo.FindByID(ctx, ticketID)
-	if err != nil {
-		return err
-	}
-	if ticket.Status != models.TicketStatusWaitingTransition || ticket.CurrentFlowStepID == nil {
 		return apperrors.ErrValidation
 	}
 

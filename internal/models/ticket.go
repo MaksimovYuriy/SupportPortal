@@ -8,11 +8,10 @@ import (
 )
 
 const (
-	TicketStatusNew               = "new"
-	TicketStatusInQueue           = "in_queue"
-	TicketStatusInProgress        = "in_progress"
-	TicketStatusWaitingTransition = "waiting_transition"
-	TicketStatusClosed            = "closed"
+	TicketStatusNew        = "new"
+	TicketStatusInQueue    = "in_queue"
+	TicketStatusInProgress = "in_progress"
+	TicketStatusClosed     = "closed"
 )
 
 type Ticket struct {

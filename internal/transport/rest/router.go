@@ -11,6 +11,7 @@ type Handlers struct {
 	UserHandler  *handlers.UserHandler
 	AgentHandler *handlers.AgentHandler
 	QueueHandler *handlers.QueueHandler
+	FlowHandler  *handlers.FlowHandler
 }
 
 func NewRouter(handlers *Handlers) http.Handler {
@@ -29,6 +30,11 @@ func NewRouter(handlers *Handlers) http.Handler {
 	mux.HandleFunc("GET /queues", handlers.QueueHandler.Index)
 	mux.HandleFunc("GET /queues/{id}", handlers.QueueHandler.Show)
 	mux.HandleFunc("POST /queues", handlers.QueueHandler.Create)
+
+	mux.HandleFunc("GET /flows", handlers.FlowHandler.Index)
+	mux.HandleFunc("GET /flows/{id}", handlers.FlowHandler.Show)
+	mux.HandleFunc("POST /flows", handlers.FlowHandler.Create)
+	mux.HandleFunc("DELETE /flows/{id}", handlers.FlowHandler.Delete)
 
 	return mux
 }

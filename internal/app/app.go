@@ -2,9 +2,12 @@ package app
 
 import (
 	"context"
+	"errors"
 	"log"
 	"log/slog"
 	"net/http"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/config"
@@ -20,6 +23,9 @@ import (
 )
 
 func Run() error {
+	appCtx, stopApp := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stopApp()
+
 	cfg, err := config.Load()
 	if err != nil {
 		return err
@@ -63,12 +69,9 @@ func Run() error {
 	}
 
 	router := rest.NewRouter(handlers)
-	engineCtx, stopEngine := context.WithCancel(context.Background())
-	defer stopEngine()
-
 	if cfg.Engine.Enabled {
 		ticketEngine := engine.NewEngine(ticketService, agentService, slog.Default(), cfg.Engine.Interval, cfg.Engine.BatchLimit)
-		go ticketEngine.Run(engineCtx)
+		go ticketEngine.Run(appCtx)
 	}
 
 	addr := ":8080"
@@ -82,5 +85,27 @@ func Run() error {
 	}
 
 	log.Printf("SupportPortal API started at %s", addr)
-	return server.ListenAndServe()
+	serverErrors := make(chan error, 1)
+	go func() {
+		serverErrors <- server.ListenAndServe()
+	}()
+
+	select {
+	case err := <-serverErrors:
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
+		return err
+	case <-appCtx.Done():
+		log.Printf("SupportPortal API shutting down")
+	}
+
+	shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelShutdown()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -56,6 +56,41 @@ func TestTicketServiceStartRouteMovesTicketToFirstStep(t *testing.T) {
 	}
 }
 
+func TestTicketServiceListFiltersTickets(t *testing.T) {
+	service, repos := newTicketServiceTestEnv()
+	agentID := int64(7)
+	stepID := int64(1)
+	queueID := int64(10)
+	repos.tickets.add(&models.Ticket{
+		FlowID:            1,
+		CurrentFlowStepID: &stepID,
+		AssignedAgentID:   &agentID,
+		Title:             "First",
+		Status:            models.TicketStatusInProgress,
+	})
+	repos.tickets.add(&models.Ticket{
+		FlowID: 2,
+		Title:  "Second",
+		Status: models.TicketStatusNew,
+	})
+
+	tickets, err := service.List(context.Background(), models.TicketFilter{
+		Status:          models.TicketStatusInProgress,
+		AssignedAgentID: &agentID,
+		QueueID:         &queueID,
+	})
+	if err != nil {
+		t.Fatalf("List returned error: %v", err)
+	}
+
+	if len(tickets) != 1 {
+		t.Fatalf("expected 1 ticket, got %d", len(tickets))
+	}
+	if tickets[0].Title != "First" {
+		t.Fatalf("expected First ticket, got %q", tickets[0].Title)
+	}
+}
+
 func TestTicketServiceAssignToAgentValidatesQueueAndAvailability(t *testing.T) {
 	tests := []struct {
 		name     string

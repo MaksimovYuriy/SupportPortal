@@ -26,6 +26,13 @@ type Ticket struct {
 	UpdatedAt         time.Time `json:"updated_at"`
 }
 
+type TicketFilter struct {
+	Status          string
+	AssignedAgentID *int64
+	FlowID          *int64
+	QueueID         *int64
+}
+
 func (t *Ticket) Validate() error {
 	if t.FlowID <= 0 || strings.TrimSpace(t.Title) == "" {
 		return apperrors.ErrValidation

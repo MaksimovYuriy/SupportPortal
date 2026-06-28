@@ -53,8 +53,8 @@ func (s *TicketService) Create(ctx context.Context, ticket *models.Ticket) error
 	return nil
 }
 
-func (s *TicketService) List(ctx context.Context) ([]*models.Ticket, error) {
-	tickets, err := s.ticketRepo.List(ctx)
+func (s *TicketService) List(ctx context.Context, filter models.TicketFilter) ([]*models.Ticket, error) {
+	tickets, err := s.ticketRepo.List(ctx, filter)
 	if err != nil {
 		return nil, err
 	}

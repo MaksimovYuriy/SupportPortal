@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/apperrors"
 	"github.com/MaksimovYuriy/SupportPortal/internal/database"
@@ -46,13 +47,38 @@ func (r *TicketRepository) Create(ctx context.Context, ticket *models.Ticket) er
 	return nil
 }
 
-func (r *TicketRepository) List(ctx context.Context) ([]*models.Ticket, error) {
+func (r *TicketRepository) List(ctx context.Context, filter models.TicketFilter) ([]*models.Ticket, error) {
 	query := `
-		SELECT id, flow_id, current_flow_step_id, assigned_agent_id, title, COALESCE(description, ''), status, created_at, updated_at
+		SELECT tickets.id, tickets.flow_id, tickets.current_flow_step_id, tickets.assigned_agent_id, tickets.title, COALESCE(tickets.description, ''), tickets.status, tickets.created_at, tickets.updated_at
 		FROM tickets
-		ORDER BY created_at DESC
 	`
-	rows, err := r.db.QueryContext(ctx, query)
+	if filter.QueueID != nil {
+		query += " INNER JOIN flow_steps fs ON fs.id = tickets.current_flow_step_id"
+	}
+	conditions := make([]string, 0)
+	args := make([]any, 0)
+	if filter.Status != "" {
+		args = append(args, filter.Status)
+		conditions = append(conditions, fmt.Sprintf("tickets.status = $%d", len(args)))
+	}
+	if filter.AssignedAgentID != nil {
+		args = append(args, *filter.AssignedAgentID)
+		conditions = append(conditions, fmt.Sprintf("tickets.assigned_agent_id = $%d", len(args)))
+	}
+	if filter.FlowID != nil {
+		args = append(args, *filter.FlowID)
+		conditions = append(conditions, fmt.Sprintf("tickets.flow_id = $%d", len(args)))
+	}
+	if filter.QueueID != nil {
+		args = append(args, *filter.QueueID)
+		conditions = append(conditions, fmt.Sprintf("fs.queue_id = $%d", len(args)))
+	}
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+	query += " ORDER BY tickets.created_at DESC"
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to execute ticket query: %w", err)
 	}

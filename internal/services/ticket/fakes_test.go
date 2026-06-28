@@ -20,7 +20,11 @@ func newTicketServiceTestEnv() (*TicketService, *ticketServiceTestEnv) {
 		tickets: &fakeTicketRepository{
 			tickets:       make(map[int64]*models.Ticket),
 			hasInProgress: make(map[int64]bool),
-			nextID:        1,
+			queueByStep: map[int64]int64{
+				1: 10,
+				2: 20,
+			},
+			nextID: 1,
 		},
 		flows: &fakeFlowRepository{
 			flows: map[int64]*models.Flow{
@@ -53,6 +57,7 @@ func newTicketServiceTestEnv() (*TicketService, *ticketServiceTestEnv) {
 type fakeTicketRepository struct {
 	tickets       map[int64]*models.Ticket
 	hasInProgress map[int64]bool
+	queueByStep   map[int64]int64
 	nextID        int64
 }
 
@@ -63,9 +68,12 @@ func (r *fakeTicketRepository) Create(_ context.Context, ticket *models.Ticket) 
 	return nil
 }
 
-func (r *fakeTicketRepository) List(_ context.Context) ([]*models.Ticket, error) {
+func (r *fakeTicketRepository) List(_ context.Context, filter models.TicketFilter) ([]*models.Ticket, error) {
 	tickets := make([]*models.Ticket, 0, len(r.tickets))
 	for _, ticket := range r.tickets {
+		if !r.matchesTicketFilter(ticket, filter) {
+			continue
+		}
 		tickets = append(tickets, cloneTicket(ticket))
 	}
 	return tickets, nil
@@ -223,4 +231,28 @@ func cloneTicket(ticket *models.Ticket) *models.Ticket {
 		clone.AssignedAgentID = &value
 	}
 	return &clone
+}
+
+func (r *fakeTicketRepository) matchesTicketFilter(ticket *models.Ticket, filter models.TicketFilter) bool {
+	if filter.Status != "" && ticket.Status != filter.Status {
+		return false
+	}
+	if filter.AssignedAgentID != nil {
+		if ticket.AssignedAgentID == nil || *ticket.AssignedAgentID != *filter.AssignedAgentID {
+			return false
+		}
+	}
+	if filter.FlowID != nil && ticket.FlowID != *filter.FlowID {
+		return false
+	}
+	if filter.QueueID != nil {
+		if ticket.CurrentFlowStepID == nil {
+			return false
+		}
+		queueID, ok := r.queueByStep[*ticket.CurrentFlowStepID]
+		if !ok || queueID != *filter.QueueID {
+			return false
+		}
+	}
+	return true
 }

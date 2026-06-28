@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/models"
 	ticketservice "github.com/MaksimovYuriy/SupportPortal/internal/services/ticket"
@@ -17,12 +18,46 @@ func NewTicketHandler(ticketService *ticketservice.TicketService) *TicketHandler
 }
 
 func (h *TicketHandler) Index(w http.ResponseWriter, r *http.Request) {
-	tickets, err := h.ticketService.List(r.Context())
+	filter, err := parseTicketFilter(r)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	tickets, err := h.ticketService.List(r.Context(), filter)
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, dto.NewTicketListResponse(tickets))
+}
+
+func parseTicketFilter(r *http.Request) (models.TicketFilter, error) {
+	query := r.URL.Query()
+	filter := models.TicketFilter{
+		Status: query.Get("status"),
+	}
+	if value := query.Get("assigned_agent_id"); value != "" {
+		id, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return models.TicketFilter{}, ErrBadRequest
+		}
+		filter.AssignedAgentID = &id
+	}
+	if value := query.Get("flow_id"); value != "" {
+		id, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return models.TicketFilter{}, ErrBadRequest
+		}
+		filter.FlowID = &id
+	}
+	if value := query.Get("queue_id"); value != "" {
+		id, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return models.TicketFilter{}, ErrBadRequest
+		}
+		filter.QueueID = &id
+	}
+	return filter, nil
 }
 
 func (h *TicketHandler) Show(w http.ResponseWriter, r *http.Request) {

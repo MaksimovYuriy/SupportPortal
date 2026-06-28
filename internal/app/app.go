@@ -3,13 +3,18 @@ package app
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/config"
 	"github.com/MaksimovYuriy/SupportPortal/internal/database/postgres"
 	"github.com/MaksimovYuriy/SupportPortal/internal/engine"
-	"github.com/MaksimovYuriy/SupportPortal/internal/services"
+	agentservice "github.com/MaksimovYuriy/SupportPortal/internal/services/agent"
+	flowservice "github.com/MaksimovYuriy/SupportPortal/internal/services/flow"
+	queueservice "github.com/MaksimovYuriy/SupportPortal/internal/services/queue"
+	ticketservice "github.com/MaksimovYuriy/SupportPortal/internal/services/ticket"
+	userservice "github.com/MaksimovYuriy/SupportPortal/internal/services/user"
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/handlers"
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/rest"
 )
@@ -37,11 +42,11 @@ func Run() error {
 	flowStepRepository := postgres.NewFlowStepRepository(db)
 	ticketRepository := postgres.NewTicketRepository(db)
 
-	agentService := services.NewAgentService(agentRepository, queueRepository, agentQueueRepository)
-	userService := services.NewUserService(userRepository)
-	queueService := services.NewQueueService(queueRepository)
-	flowService := services.NewFlowService(flowRepository, flowStepRepository, queueRepository)
-	ticketService := services.NewTicketService(ticketRepository, flowRepository, flowStepRepository, agentRepository, agentQueueRepository)
+	agentService := agentservice.NewAgentService(agentRepository, queueRepository, agentQueueRepository)
+	userService := userservice.NewUserService(userRepository)
+	queueService := queueservice.NewQueueService(queueRepository)
+	flowService := flowservice.NewFlowService(flowRepository, flowStepRepository, queueRepository)
+	ticketService := ticketservice.NewTicketService(ticketRepository, flowRepository, flowStepRepository, agentRepository, agentQueueRepository)
 
 	userHandler := handlers.NewUserHandler(userService)
 	agentHandler := handlers.NewAgentHandler(agentService)
@@ -61,8 +66,10 @@ func Run() error {
 	engineCtx, stopEngine := context.WithCancel(context.Background())
 	defer stopEngine()
 
-	ticketEngine := engine.NewEngine(ticketService, agentService, 5*time.Second, 100)
-	go ticketEngine.Run(engineCtx)
+	if cfg.Engine.Enabled {
+		ticketEngine := engine.NewEngine(ticketService, agentService, slog.Default(), cfg.Engine.Interval, cfg.Engine.BatchLimit)
+		go ticketEngine.Run(engineCtx)
+	}
 
 	addr := ":8080"
 	server := &http.Server{

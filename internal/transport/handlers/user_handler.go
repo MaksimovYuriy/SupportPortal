@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/models"
-	"github.com/MaksimovYuriy/SupportPortal/internal/services"
+	userservice "github.com/MaksimovYuriy/SupportPortal/internal/services/user"
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/dto"
 )
 
 type UserHandler struct {
-	userService *services.UserService
+	userService *userservice.UserService
 }
 
-func NewUserHandler(userService *services.UserService) *UserHandler {
+func NewUserHandler(userService *userservice.UserService) *UserHandler {
 	return &UserHandler{userService: userService}
 }
 

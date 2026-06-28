@@ -2,23 +2,29 @@ package engine
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"time"
 
-	"github.com/MaksimovYuriy/SupportPortal/internal/services"
+	agentservice "github.com/MaksimovYuriy/SupportPortal/internal/services/agent"
+	ticketservice "github.com/MaksimovYuriy/SupportPortal/internal/services/ticket"
 )
 
 type Engine struct {
-	tickets  *services.TicketService
-	agents   *services.AgentService
+	tickets  *ticketservice.TicketService
+	agents   *agentservice.AgentService
+	logger   *slog.Logger
 	interval time.Duration
 	limit    int
 }
 
-func NewEngine(tickets *services.TicketService, agents *services.AgentService, interval time.Duration, limit int) *Engine {
+func NewEngine(tickets *ticketservice.TicketService, agents *agentservice.AgentService, logger *slog.Logger, interval time.Duration, limit int) *Engine {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	return &Engine{
 		tickets:  tickets,
 		agents:   agents,
+		logger:   logger,
 		interval: interval,
 		limit:    limit,
 	}
@@ -32,8 +38,8 @@ func (e *Engine) Run(ctx context.Context) {
 		e.limit = 100
 	}
 
-	log.Printf("ticket engine started: interval=%s limit=%d", e.interval, e.limit)
-	defer log.Printf("ticket engine stopped")
+	e.logger.Info("ticket engine started", "interval", e.interval.String(), "limit", e.limit)
+	defer e.logger.Info("ticket engine stopped")
 
 	e.tick(ctx)
 
@@ -58,46 +64,47 @@ func (e *Engine) tick(ctx context.Context) {
 func (e *Engine) startNewTickets(ctx context.Context) {
 	tickets, err := e.tickets.ListNew(ctx, e.limit)
 	if err != nil {
-		log.Printf("ticket engine: failed to list new tickets: %v", err)
+		e.logger.Error("ticket engine failed to list new tickets", "error", err)
 		return
 	}
 
 	for _, ticket := range tickets {
 		if err := e.tickets.StartRoute(ctx, ticket.ID); err != nil {
-			log.Printf("ticket engine: failed to start route for ticket %d: %v", ticket.ID, err)
+			e.logger.Error("ticket engine failed to start route", "ticket_id", ticket.ID, "error", err)
 			continue
 		}
-		log.Printf("ticket engine: ticket %d moved to first queue", ticket.ID)
+		e.logger.Info("ticket moved to first queue", "ticket_id", ticket.ID)
 	}
 }
 
 func (e *Engine) assignQueuedTickets(ctx context.Context) {
 	tickets, err := e.tickets.ListInQueue(ctx, e.limit)
 	if err != nil {
-		log.Printf("ticket engine: failed to list queued tickets: %v", err)
+		e.logger.Error("ticket engine failed to list queued tickets", "error", err)
 		return
 	}
 
 	for _, ticket := range tickets {
 		queueID, err := e.tickets.CurrentQueueID(ctx, ticket)
 		if err != nil {
-			log.Printf("ticket engine: failed to get current queue for ticket %d: %v", ticket.ID, err)
+			e.logger.Error("ticket engine failed to get current queue", "ticket_id", ticket.ID, "error", err)
 			continue
 		}
 
 		agent, err := e.agents.FindAvailableForQueue(ctx, queueID)
 		if err != nil {
-			log.Printf("ticket engine: failed to find available agent for queue %d: %v", queueID, err)
+			e.logger.Error("ticket engine failed to find available agent", "queue_id", queueID, "error", err)
 			continue
 		}
 		if agent == nil {
+			e.logger.Debug("no available agent for queue", "queue_id", queueID)
 			continue
 		}
 
 		if err := e.tickets.AssignToAgent(ctx, ticket.ID, int64(agent.ID)); err != nil {
-			log.Printf("ticket engine: failed to assign ticket %d to agent %d: %v", ticket.ID, agent.ID, err)
+			e.logger.Error("ticket engine failed to assign ticket", "ticket_id", ticket.ID, "agent_id", agent.ID, "error", err)
 			continue
 		}
-		log.Printf("ticket engine: ticket %d assigned to agent %d", ticket.ID, agent.ID)
+		e.logger.Info("ticket assigned", "ticket_id", ticket.ID, "agent_id", agent.ID)
 	}
 }

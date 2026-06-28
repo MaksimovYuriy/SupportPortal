@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/models"
-	"github.com/MaksimovYuriy/SupportPortal/internal/services"
+	agentservice "github.com/MaksimovYuriy/SupportPortal/internal/services/agent"
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/dto"
 )
 
 type AgentHandler struct {
-	agentService *services.AgentService
+	agentService *agentservice.AgentService
 }
 
-func NewAgentHandler(agentService *services.AgentService) *AgentHandler {
+func NewAgentHandler(agentService *agentservice.AgentService) *AgentHandler {
 	return &AgentHandler{agentService: agentService}
 }
 

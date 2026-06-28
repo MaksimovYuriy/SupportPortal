@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/models"
-	"github.com/MaksimovYuriy/SupportPortal/internal/services"
+	flowservice "github.com/MaksimovYuriy/SupportPortal/internal/services/flow"
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/dto"
 )
 
 type FlowHandler struct {
-	flowService *services.FlowService
+	flowService *flowservice.FlowService
 }
 
-func NewFlowHandler(flowService *services.FlowService) *FlowHandler {
+func NewFlowHandler(flowService *flowservice.FlowService) *FlowHandler {
 	return &FlowHandler{flowService: flowService}
 }
 

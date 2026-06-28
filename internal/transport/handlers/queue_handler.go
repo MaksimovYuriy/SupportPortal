@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/models"
-	"github.com/MaksimovYuriy/SupportPortal/internal/services"
+	queueservice "github.com/MaksimovYuriy/SupportPortal/internal/services/queue"
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/dto"
 )
 
 type QueueHandler struct {
-	queueService *services.QueueService
+	queueService *queueservice.QueueService
 }
 
-func NewQueueHandler(queueService *services.QueueService) *QueueHandler {
+func NewQueueHandler(queueService *queueservice.QueueService) *QueueHandler {
 	return &QueueHandler{queueService: queueService}
 }
 

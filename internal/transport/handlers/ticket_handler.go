@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/models"
-	"github.com/MaksimovYuriy/SupportPortal/internal/services"
+	ticketservice "github.com/MaksimovYuriy/SupportPortal/internal/services/ticket"
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/dto"
 )
 
 type TicketHandler struct {
-	ticketService *services.TicketService
+	ticketService *ticketservice.TicketService
 }
 
-func NewTicketHandler(ticketService *services.TicketService) *TicketHandler {
+func NewTicketHandler(ticketService *ticketservice.TicketService) *TicketHandler {
 	return &TicketHandler{ticketService: ticketService}
 }
 

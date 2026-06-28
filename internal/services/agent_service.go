@@ -2,7 +2,9 @@ package services
 
 import (
 	"context"
+	"errors"
 
+	"github.com/MaksimovYuriy/SupportPortal/internal/apperrors"
 	"github.com/MaksimovYuriy/SupportPortal/internal/database"
 	"github.com/MaksimovYuriy/SupportPortal/internal/models"
 )
@@ -30,6 +32,27 @@ func (s *AgentService) FindByID(ctx context.Context, id int64) (*models.Agent, e
 	agent, err := s.agentRepo.FindByID(ctx, id)
 
 	if err != nil {
+		return nil, err
+	}
+	return agent, nil
+}
+
+func (s *AgentService) FindAvailableForQueue(ctx context.Context, queueID int64) (*models.Agent, error) {
+	if queueID <= 0 {
+		return nil, apperrors.ErrValidation
+	}
+	queue, err := s.queueRepo.FindByID(ctx, queueID)
+	if err != nil {
+		return nil, err
+	}
+	if !queue.IsActive {
+		return nil, apperrors.ErrValidation
+	}
+	agent, err := s.agentRepo.FindAvailableByQueueID(ctx, queueID)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return agent, nil

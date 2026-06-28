@@ -1,12 +1,14 @@
 package app
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/config"
 	"github.com/MaksimovYuriy/SupportPortal/internal/database/postgres"
+	"github.com/MaksimovYuriy/SupportPortal/internal/engine"
 	"github.com/MaksimovYuriy/SupportPortal/internal/services"
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/handlers"
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/rest"
@@ -56,6 +58,12 @@ func Run() error {
 	}
 
 	router := rest.NewRouter(handlers)
+	engineCtx, stopEngine := context.WithCancel(context.Background())
+	defer stopEngine()
+
+	ticketEngine := engine.NewEngine(ticketService, agentService, 5*time.Second, 100)
+	go ticketEngine.Run(engineCtx)
+
 	addr := ":8080"
 	server := &http.Server{
 		Addr:              addr,

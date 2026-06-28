@@ -77,6 +77,17 @@ func (s *TicketService) ListInQueue(ctx context.Context, limit int) ([]*models.T
 	return s.listByStatus(ctx, models.TicketStatusInQueue, limit)
 }
 
+func (s *TicketService) CurrentQueueID(ctx context.Context, ticket *models.Ticket) (int64, error) {
+	if ticket == nil || ticket.CurrentFlowStepID == nil {
+		return 0, apperrors.ErrValidation
+	}
+	step, err := s.flowStepRepo.FindByID(ctx, *ticket.CurrentFlowStepID)
+	if err != nil {
+		return 0, err
+	}
+	return int64(step.QueueID), nil
+}
+
 func (s *TicketService) StartRoute(ctx context.Context, ticketID int64) error {
 	ticket, err := s.ticketRepo.FindByID(ctx, ticketID)
 	if err != nil {

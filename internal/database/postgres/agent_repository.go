@@ -78,6 +78,40 @@ func (r *AgentRepository) FindByID(ctx context.Context, id int64) (*models.Agent
 	return &agent, nil
 }
 
+func (r *AgentRepository) FindAvailableByQueueID(ctx context.Context, queueID int64) (*models.Agent, error) {
+	query := `
+		SELECT a.id, a.name, a.is_available, a.user_id, a.created_at, a.updated_at
+		FROM agents a
+		INNER JOIN agent_queues aq ON aq.agent_id = a.id
+		WHERE aq.queue_id = $1
+			AND a.is_available = TRUE
+			AND NOT EXISTS (
+				SELECT 1
+				FROM tickets t
+				WHERE t.assigned_agent_id = a.id
+					AND t.status = $2
+			)
+		ORDER BY a.created_at ASC
+		LIMIT 1
+	`
+	row := r.db.QueryRowContext(ctx, query, queueID, models.TicketStatusInProgress)
+	var agent models.Agent
+	if err := row.Scan(
+		&agent.ID,
+		&agent.Name,
+		&agent.IsAvailable,
+		&agent.UserID,
+		&agent.CreatedAt,
+		&agent.UpdatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, apperrors.ErrNotFound
+		}
+		return nil, fmt.Errorf("Failed to scan available agent row: %w", err)
+	}
+	return &agent, nil
+}
+
 func (r *AgentRepository) CreateForUser(ctx context.Context, user *models.User) error {
 	query := `
 		INSERT INTO agents (name, is_available, user_id)

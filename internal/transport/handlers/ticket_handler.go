@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/models"
 	ticketservice "github.com/MaksimovYuriy/SupportPortal/internal/services/ticket"
@@ -36,22 +35,25 @@ func parseTicketFilter(r *http.Request) (models.TicketFilter, error) {
 	filter := models.TicketFilter{
 		Status: query.Get("status"),
 	}
+	if filter.Status != "" && !models.IsValidTicketStatus(filter.Status) {
+		return models.TicketFilter{}, ErrBadRequest
+	}
 	if value := query.Get("assigned_agent_id"); value != "" {
-		id, err := strconv.ParseInt(value, 10, 64)
+		id, err := parsePositiveInt64(value)
 		if err != nil {
 			return models.TicketFilter{}, ErrBadRequest
 		}
 		filter.AssignedAgentID = &id
 	}
 	if value := query.Get("flow_id"); value != "" {
-		id, err := strconv.ParseInt(value, 10, 64)
+		id, err := parsePositiveInt64(value)
 		if err != nil {
 			return models.TicketFilter{}, ErrBadRequest
 		}
 		filter.FlowID = &id
 	}
 	if value := query.Get("queue_id"); value != "" {
-		id, err := strconv.ParseInt(value, 10, 64)
+		id, err := parsePositiveInt64(value)
 		if err != nil {
 			return models.TicketFilter{}, ErrBadRequest
 		}

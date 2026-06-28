@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"errors"
-	"log"
 	"log/slog"
 	"net/http"
 	"os/signal"
@@ -25,6 +24,7 @@ import (
 func Run() error {
 	appCtx, stopApp := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stopApp()
+	logger := slog.Default()
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -36,7 +36,7 @@ func Run() error {
 	}
 	defer func() {
 		if err := db.Close(); err != nil {
-			log.Printf("failed to close database connection: %v", err)
+			logger.Error("failed to close database connection", "error", err)
 		}
 	}()
 
@@ -68,9 +68,9 @@ func Run() error {
 		TicketHandler: ticketHandler,
 	}
 
-	router := rest.NewRouter(handlers)
+	router := rest.NewRouterWithLogger(handlers, logger)
 	if cfg.Engine.Enabled {
-		ticketEngine := engine.NewEngine(ticketService, agentService, slog.Default(), cfg.Engine.Interval, cfg.Engine.BatchLimit)
+		ticketEngine := engine.NewEngine(ticketService, agentService, logger, cfg.Engine.Interval, cfg.Engine.BatchLimit)
 		go ticketEngine.Run(appCtx)
 	}
 
@@ -84,7 +84,7 @@ func Run() error {
 		IdleTimeout:       time.Minute,
 	}
 
-	log.Printf("SupportPortal API started at %s", addr)
+	logger.Info("SupportPortal API started", "addr", addr)
 	serverErrors := make(chan error, 1)
 	go func() {
 		serverErrors <- server.ListenAndServe()
@@ -97,7 +97,7 @@ func Run() error {
 		}
 		return err
 	case <-appCtx.Done():
-		log.Printf("SupportPortal API shutting down")
+		logger.Info("SupportPortal API shutting down")
 	}
 
 	shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), 10*time.Second)

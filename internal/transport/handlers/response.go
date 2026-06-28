@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -39,7 +40,10 @@ func handleError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, "Validation error")
 	case errors.Is(err, apperrors.ErrNotFound):
 		writeError(w, http.StatusNotFound, "Resource not found")
+	case errors.Is(err, apperrors.ErrConflict):
+		writeError(w, http.StatusConflict, "Conflict")
 	default:
+		slog.Error("unexpected handler error", "error", err)
 		writeError(w, http.StatusInternalServerError, "Internal server error")
 	}
 }

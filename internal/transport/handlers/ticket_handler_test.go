@@ -33,8 +33,10 @@ func TestParseTicketFilter(t *testing.T) {
 func TestParseTicketFilterRejectsInvalidIDs(t *testing.T) {
 	tests := []string{
 		"/tickets?assigned_agent_id=bad",
+		"/tickets?assigned_agent_id=0",
 		"/tickets?flow_id=bad",
 		"/tickets?queue_id=bad",
+		"/tickets?status=bad",
 	}
 
 	for _, url := range tests {

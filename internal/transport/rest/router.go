@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/MaksimovYuriy/SupportPortal/internal/transport/handlers"
@@ -16,6 +17,10 @@ type Handlers struct {
 }
 
 func NewRouter(handlers *Handlers) http.Handler {
+	return NewRouterWithLogger(handlers, slog.Default())
+}
+
+func NewRouterWithLogger(handlers *Handlers, logger *slog.Logger) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /health", healthHandler)
@@ -42,7 +47,7 @@ func NewRouter(handlers *Handlers) http.Handler {
 	mux.HandleFunc("POST /tickets", handlers.TicketHandler.Create)
 	mux.HandleFunc("POST /tickets/{id}/complete", handlers.TicketHandler.CompleteCurrentStep)
 
-	return mux
+	return withRecovery(withLogging(mux, logger), logger)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {

@@ -39,3 +39,12 @@ func (t *Ticket) Validate() error {
 	}
 	return nil
 }
+
+func IsValidTicketStatus(status string) bool {
+	switch status {
+	case TicketStatusNew, TicketStatusInQueue, TicketStatusInProgress, TicketStatusClosed:
+		return true
+	default:
+		return false
+	}
+}

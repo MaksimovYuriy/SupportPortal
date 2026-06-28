@@ -5,19 +5,30 @@ import (
 	"log/slog"
 	"time"
 
-	agentservice "github.com/MaksimovYuriy/SupportPortal/internal/services/agent"
-	ticketservice "github.com/MaksimovYuriy/SupportPortal/internal/services/ticket"
+	"github.com/MaksimovYuriy/SupportPortal/internal/models"
 )
 
+type TicketService interface {
+	ListNew(ctx context.Context, limit int) ([]*models.Ticket, error)
+	StartRoute(ctx context.Context, ticketID int64) error
+	ListInQueue(ctx context.Context, limit int) ([]*models.Ticket, error)
+	CurrentQueueID(ctx context.Context, ticket *models.Ticket) (int64, error)
+	AssignToAgent(ctx context.Context, ticketID int64, agentID int64) error
+}
+
+type AgentService interface {
+	FindAvailableForQueue(ctx context.Context, queueID int64) (*models.Agent, error)
+}
+
 type Engine struct {
-	tickets  *ticketservice.TicketService
-	agents   *agentservice.AgentService
+	tickets  TicketService
+	agents   AgentService
 	logger   *slog.Logger
 	interval time.Duration
 	limit    int
 }
 
-func NewEngine(tickets *ticketservice.TicketService, agents *agentservice.AgentService, logger *slog.Logger, interval time.Duration, limit int) *Engine {
+func NewEngine(tickets TicketService, agents AgentService, logger *slog.Logger, interval time.Duration, limit int) *Engine {
 	if logger == nil {
 		logger = slog.Default()
 	}

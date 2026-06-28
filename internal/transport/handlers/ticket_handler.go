@@ -56,3 +56,21 @@ func (h *TicketHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusCreated, dto.NewTicketResponse(&ticket))
 }
+
+func (h *TicketHandler) CompleteCurrentStep(w http.ResponseWriter, r *http.Request) {
+	id, err := parsePathID(r)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	if err := h.ticketService.CompleteCurrentStep(r.Context(), id); err != nil {
+		handleError(w, err)
+		return
+	}
+	ticket, err := h.ticketService.FindByID(r.Context(), id)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, dto.NewTicketResponse(ticket))
+}

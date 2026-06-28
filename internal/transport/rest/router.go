@@ -40,6 +40,7 @@ func NewRouter(handlers *Handlers) http.Handler {
 	mux.HandleFunc("GET /tickets", handlers.TicketHandler.Index)
 	mux.HandleFunc("GET /tickets/{id}", handlers.TicketHandler.Show)
 	mux.HandleFunc("POST /tickets", handlers.TicketHandler.Create)
+	mux.HandleFunc("POST /tickets/{id}/complete", handlers.TicketHandler.CompleteCurrentStep)
 
 	return mux
 }
